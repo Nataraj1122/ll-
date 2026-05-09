@@ -6,10 +6,11 @@ import { useAppContext } from '../context/AppContext';
 import { Product } from '../types';
 import { formatINR } from '../lib/utils';
 import ProductCard from '../components/ProductCard';
+import DataErrorState from '../components/DataErrorState';
 
 export default function Shop() {
-  const { products, loading: productsLoading } = useSupabaseProducts();
-  const { categories } = useSupabaseCategories();
+  const { products, loading: productsLoading, error: productsError, refetch: refetchProducts } = useSupabaseProducts();
+  const { categories, loading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useSupabaseCategories();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('featured');
   const [showFilters, setShowFilters] = useState(false);
@@ -71,23 +72,27 @@ export default function Shop() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-12 bg-zinc-50 p-8 border border-zinc-100">
                 <div>
                   <h3 className="text-[10px] uppercase tracking-widest font-bold mb-6 text-zinc-400">Categories</h3>
-                  <div className="flex flex-wrap gap-3">
-                    <button 
-                      onClick={() => setSelectedCategory('all')}
-                      className={`px-5 py-2 text-[11px] uppercase tracking-wider transition-all border ${selectedCategory === 'all' ? 'bg-black text-white border-black' : 'bg-white border-zinc-200 hover:border-black'}`}
-                    >
-                      All Collections
-                    </button>
-                    {categories.map((cat) => (
+                  {categoriesError ? (
+                    <div className="text-red-500 text-sm mb-4">Failed to load categories. <button onClick={refetchCategories} className="underline">Retry</button></div>
+                  ) : (
+                    <div className="flex flex-wrap gap-3">
                       <button 
-                        key={`shop-filter-btn-${cat.id}`}
-                        onClick={() => setSelectedCategory(cat.id)}
-                        className={`px-5 py-2 text-[11px] uppercase tracking-wider transition-all border ${selectedCategory === cat.id ? 'bg-black text-white border-black' : 'bg-white border-zinc-200 hover:border-black'}`}
+                        onClick={() => setSelectedCategory('all')}
+                        className={`px-5 py-2 text-[11px] uppercase tracking-wider transition-all border ${selectedCategory === 'all' ? 'bg-black text-white border-black' : 'bg-white border-zinc-200 hover:border-black'}`}
                       >
-                        {cat.name}
+                        All Collections
                       </button>
-                    ))}
-                  </div>
+                      {categories.map((cat) => (
+                        <button 
+                          key={`shop-filter-btn-${cat.id}`}
+                          onClick={() => setSelectedCategory(cat.id)}
+                          className={`px-5 py-2 text-[11px] uppercase tracking-wider transition-all border ${selectedCategory === cat.id ? 'bg-black text-white border-black' : 'bg-white border-zinc-200 hover:border-black'}`}
+                        >
+                          {cat.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 
                 <div>
@@ -114,7 +119,9 @@ export default function Shop() {
           )}
         </AnimatePresence>
 
-        {productsLoading ? (
+        {productsError ? (
+          <DataErrorState message={productsError} onRetry={refetchProducts} />
+        ) : productsLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-10 md:gap-y-16">
             {[1,2,3,4,5,6,7,8].map(i => (
               <div key={`shop-page-skeleton-loader-${i}`} className="animate-pulse">
@@ -132,7 +139,7 @@ export default function Shop() {
           </div>
         )}
         
-        {!productsLoading && filteredProducts.length === 0 && (
+        {!productsError && !productsLoading && filteredProducts.length === 0 && (
           <div className="py-32 text-center">
             <p className="text-zinc-400 uppercase tracking-widest text-sm">No products found in this selection.</p>
             <button onClick={() => setSelectedCategory('all')} className="mt-4 text-black underline underline-offset-4 uppercase text-[10px] tracking-widest font-bold">Clear Filters</button>

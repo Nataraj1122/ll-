@@ -5,10 +5,11 @@ import { Product } from '../../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { Edit2, Trash2, Plus, X, AlertTriangle, CheckCircle } from 'lucide-react';
 import { formatINR } from '../../lib/utils';
+import DataErrorState from '../../components/DataErrorState';
 
 export default function AdminProducts() {
-  const { products, loading: productsLoading } = useSupabaseProducts();
-  const { categories } = useSupabaseCategories();
+  const { products, loading: productsLoading, error: productsError, refetch: refetchProducts } = useSupabaseProducts();
+  const { categories, error: categoriesError, refetch: refetchCategories } = useSupabaseCategories();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -47,7 +48,22 @@ export default function AdminProducts() {
     setEditingProduct(prod);
     setName(prod.name);
     setPrice(prod.price.toString());
-    setCategoryId(prod.categoryId);
+    
+    // Find the proper category UUID. prod.categoryId might be a text name if it's from legacy data.
+    let resolvedCategoryId = prod.categoryId;
+    // Check if it's actually a name
+    const catByName = categories.find(c => c.name === prod.categoryId || c.name.toLowerCase() === prod.categoryId.toLowerCase());
+    if (catByName) {
+      resolvedCategoryId = catByName.id;
+    } else {
+      // If it's already an ID, verify it exists. If not, fallback to first category.
+      const catById = categories.find(c => c.id === prod.categoryId);
+      if (!catById && categories.length > 0) {
+        resolvedCategoryId = categories[0].id;
+      }
+    }
+
+    setCategoryId(resolvedCategoryId);
     setImages(prod.images.join('\n'));
     setFile(null);
     setStock(prod.stock.toString());
@@ -166,7 +182,12 @@ export default function AdminProducts() {
           </button>
        </div>
 
-       {productsLoading ? (
+       {productsError || categoriesError ? (
+          <DataErrorState 
+             message={productsError || categoriesError || "Failed to load"} 
+             onRetry={() => { refetchProducts(); refetchCategories(); }} 
+          />
+       ) : productsLoading ? (
          <p className="text-zinc-500">Loading products...</p>
        ) : (
          <div className="bg-white border border-zinc-200 overflow-x-auto">
@@ -187,7 +208,11 @@ export default function AdminProducts() {
                   </tr>
                )}
                {products.map((prod) => {
-                 const cat = categories.find(c => c.id === prod.categoryId);
+                  let cat = categories.find(c => c.id === prod.categoryId);
+                 if (!cat) {
+                    cat = categories.find(c => c.name === prod.categoryId || c.name.toLowerCase() === prod.categoryId.toLowerCase());
+                 }
+                 const displayCategoryName = cat ? cat.name : (prod.categoryId !== 'all' && !prod.categoryId.includes('-') ? prod.categoryId : 'Unknown');
                  return (
                  <tr key={`admin-prod-${prod.id}`} className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50">
                    <td className="px-6 py-4">
@@ -195,7 +220,7 @@ export default function AdminProducts() {
                    </td>
                    <td className="px-6 py-4 font-medium">{prod.name}</td>
                    <td className="px-6 py-4">{formatINR(prod.price)}</td>
-                   <td className="px-6 py-4 text-zinc-500">{cat ? cat.name : 'Unknown'}</td>
+                   <td className="px-6 py-4 text-zinc-500">{displayCategoryName}</td>
                    <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                          <button onClick={() => openEdit(prod)} className="p-2 text-zinc-400 hover:text-black transition-colors" title="Edit">
@@ -408,8 +433,8 @@ export default function AdminProducts() {
                    </div>
 
                    <div className="md:col-span-2 mt-4">
-                       <button type="submit" disabled={submitting} className="w-full btn-primary py-4 disabled:opacity-50">
-                          {submitting ? 'Saving...' : 'Save Product'}
+                       <button type="submit" disabled={submitting || uploading} className="w-full btn-primary py-4 disabled:opacity-50">
+                          {uploading ? 'Uploading Image...' : submitting ? 'Saving...' : 'Save Product'}
                        </button>
                    </div>
                 </form>

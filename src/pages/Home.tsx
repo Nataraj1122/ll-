@@ -8,6 +8,7 @@ import { formatINR } from '../lib/utils';
 import { Product } from '../types';
 import { ProductSkeleton, CategorySkeleton } from '../components/Skeleton';
 import ProductCard from '../components/ProductCard';
+import DataErrorState from '../components/DataErrorState';
 import { getSupabaseFileUrl } from '../lib/supabase';
 
 const IMAGES = {
@@ -18,8 +19,8 @@ const IMAGES = {
 };
 
 export default function Home() {
-  const { categories, loading: categoriesLoading } = useSupabaseCategories();
-  const { products, loading: productsLoading } = useSupabaseProducts();
+  const { categories, loading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useSupabaseCategories();
+  const { products, loading: productsLoading, error: productsError, refetch: refetchProducts } = useSupabaseProducts();
   const { addToBag, toggleWishlist, isInWishlist } = useAppContext();
   const { hash } = useLocation();
   const navigate = useNavigate();
@@ -59,17 +60,14 @@ export default function Home() {
       {/* Hero Section - Premium Centered */}
       <section className="relative h-[100dvh] w-full bg-[#111] overflow-hidden flex items-center justify-center">
         {/* MAIN IMAGE */}
-        <div className="absolute inset-0 w-full h-full bg-[#111]">
+        <div className="absolute inset-0 w-full h-full bg-zinc-900">
           <img 
             src={heroImg} 
             alt="Reload Premium Fashion"
             className="w-full h-full object-cover object-center"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
           />
           {/* Subtle dark overlay for text readability and cinematic feel */}
-          <div className="absolute inset-0 bg-black/30 pointer-events-none"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-black/60 pointer-events-none"></div>
         </div>
 
         {/* HERO CONTENT - CENTERED */}
@@ -113,7 +111,11 @@ export default function Home() {
           </div>
           
           <div className="flex overflow-x-auto md:grid md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-12 pb-2 scrollbar-none snap-x snap-mandatory">
-            {categoriesLoading ? (
+            {categoriesError ? (
+              <div className="col-span-full">
+                <DataErrorState message={categoriesError} onRetry={refetchCategories} />
+              </div>
+            ) : categoriesLoading ? (
                Array.from({ length: 6 }).map((_, i) => <CategorySkeleton key={`home-cat-sk-${i}`} />)
             ) : (
                 categories.map((category, idx) => (
@@ -170,7 +172,11 @@ export default function Home() {
             ref={trendingRef}
             className="flex gap-4 md:gap-8 overflow-x-auto pb-4 md:pb-10 scrollbar-none snap-x snap-mandatory"
           >
-            {productsLoading ? (
+            {productsError ? (
+              <div className="w-full">
+                <DataErrorState message={productsError} onRetry={refetchProducts} />
+              </div>
+            ) : productsLoading ? (
                Array.from({ length: 5 }).map((_, i) => (
                  <div key={`home-trend-sk-${i}`} className="flex-none w-[160px] md:w-[280px]">
                    <ProductSkeleton />
@@ -246,7 +252,11 @@ export default function Home() {
           </div>
 
           <div className="flex overflow-x-auto md:grid md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-x-8 md:gap-y-12 pb-6 md:pb-12 scrollbar-none snap-x snap-mandatory">
-            {productsLoading ? (
+            {productsError ? (
+              <div className="col-span-full w-full">
+                <DataErrorState message={productsError} onRetry={refetchProducts} />
+              </div>
+            ) : productsLoading ? (
                Array.from({ length: 4 }).map((_, i) => <ProductSkeleton key={`home-new-sk-${i}`} />)
             ) : newArrivals.length > 0 ? (
                 newArrivals.slice(0, 8).map((product, idx) => (

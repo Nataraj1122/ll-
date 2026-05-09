@@ -1,34 +1,44 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { Product, Category } from '../types';
 
 export function useSupabaseCategories() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchCategories() {
-      try {
-        const { data, error } = await supabase
-          .from('categories')
-          .select('*')
-          .order('name');
-        
-        if (error) throw error;
-        
+  const fetchCategories = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error: sbError } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name');
+      
+      if (sbError) throw sbError;
+      
+      if (data) {
         setCategories(Array.from(new Map(data.map(cat => [cat.id, {
           id: cat.id,
           name: cat.name,
           image: cat.image_url
         }])).values()));
-      } catch (error) {
-        console.error("Error fetching Supabase categories:", error);
-      } finally {
-        setLoading(false);
       }
+    } catch (err) {
+      console.error("Error fetching Supabase categories:", err);
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
     }
-    
+  }, []);
+
+  useEffect(() => {
     fetchCategories();
+
+    const authListener = supabase.auth.onAuthStateChange(() => {
+       fetchCategories();
+    });
 
     // Set up real-time listener
     const channel = supabase
@@ -39,27 +49,31 @@ export function useSupabaseCategories() {
       .subscribe();
 
     return () => {
+      authListener.data.subscription.unsubscribe();
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchCategories]);
 
-  return { categories, loading };
+  return { categories, loading, error, refetch: fetchCategories };
 }
 
 export function useSupabaseProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchProducts() {
-      try {
-        const { data, error } = await supabase
-          .from('products')
-          .select('*')
-          .order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error: sbError } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (sbError) throw sbError;
+      
+      if (data) {
         setProducts(Array.from(new Map(data.map(p => [p.id, {
           id: p.id,
           name: p.name || 'Untitled Product',
@@ -72,14 +86,21 @@ export function useSupabaseProducts() {
           isTrending: p.is_trending || false,
           isNewArrival: p.is_new_arrival ?? true
         }])).values()));
-      } catch (error) {
-        console.error("Error fetching Supabase products:", error);
-      } finally {
-        setLoading(false);
       }
+    } catch (err) {
+      console.error("Error fetching Supabase products:", err);
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
     }
-    
+  }, []);
+
+  useEffect(() => {
     fetchProducts();
+
+    const authListener = supabase.auth.onAuthStateChange(() => {
+      fetchProducts();
+    });
 
     // Set up real-time listener
     const channel = supabase
@@ -90,9 +111,10 @@ export function useSupabaseProducts() {
       .subscribe();
 
     return () => {
+      authListener.data.subscription.unsubscribe();
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchProducts]);
 
-  return { products, loading };
+  return { products, loading, error, refetch: fetchProducts };
 }

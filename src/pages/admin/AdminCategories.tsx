@@ -4,9 +4,10 @@ import { useSupabaseCategories } from '../../hooks/useSupabaseData';
 import { Category } from '../../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { Edit2, Trash2, Plus, X, AlertTriangle } from 'lucide-react';
+import DataErrorState from '../../components/DataErrorState';
 
 export default function AdminCategories() {
-  const { categories, loading } = useSupabaseCategories();
+  const { categories, loading, error, refetch } = useSupabaseCategories();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   
@@ -91,7 +92,9 @@ export default function AdminCategories() {
           </button>
        </div>
 
-       {loading ? (
+       {error ? (
+          <DataErrorState message={error} onRetry={refetch} />
+       ) : loading ? (
          <p className="text-zinc-500">Loading categories...</p>
        ) : (
          <div className="bg-white border border-zinc-200">

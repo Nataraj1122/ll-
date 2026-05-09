@@ -6,11 +6,12 @@ import { useSupabaseProducts, useSupabaseCategories } from '../hooks/useSupabase
 import { useAppContext } from '../context/AppContext';
 import { formatINR } from '../lib/utils';
 import { Product } from '../types';
+import DataErrorState from '../components/DataErrorState';
 
 export default function CategoryPage() {
   const { id } = useParams<{ id: string }>();
-  const { products, loading: productsLoading } = useSupabaseProducts();
-  const { categories, loading: categoriesLoading } = useSupabaseCategories();
+  const { products, loading: productsLoading, error: productsError, refetch: refetchProducts } = useSupabaseProducts();
+  const { categories, loading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useSupabaseCategories();
   const { addToBag, toggleWishlist, isInWishlist } = useAppContext();
   
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -18,6 +19,17 @@ export default function CategoryPage() {
 
   const category = categories.find(c => c.id === id);
   const categoryProducts = products.filter(p => p.categoryId === id);
+
+  if (categoriesError || productsError) {
+    return (
+      <div className="min-h-screen pt-32 pb-24 flex items-center justify-center">
+         <DataErrorState message={categoriesError || productsError || "An error occurred"} onRetry={() => {
+           refetchCategories();
+           refetchProducts();
+         }} />
+      </div>
+    );
+  }
 
   if (categoriesLoading || productsLoading) {
     return <div className="min-h-screen pt-32 pb-24 flex items-center justify-center font-serif text-2xl text-zinc-400">Loading...</div>;

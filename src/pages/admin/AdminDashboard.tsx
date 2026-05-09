@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { formatINR } from '../../lib/utils';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, Users, BadgeIndianRupee, ArrowRight } from 'lucide-react';
+import { ShoppingCart, Users, BadgeIndianRupee, ArrowRight, Package } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export default function AdminDashboard() {
@@ -10,7 +10,8 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState({
       sales: 0,
       orders: 0,
-      customers: 0
+      customers: 0,
+      products: 0
   });
   const [loading, setLoading] = useState(true);
 
@@ -31,6 +32,13 @@ export default function AdminDashboard() {
              
              if (profilesError) throw profilesError;
 
+             // Fetch products count
+             const { count: productsCount, error: productsError } = await supabase
+               .from('products')
+               .select('*', { count: 'exact', head: true });
+             
+             if (productsError) throw productsError;
+
              let totalSales = 0;
              ordersData?.forEach(order => {
                  if (order.status?.toLowerCase() !== 'cancelled') {
@@ -41,7 +49,8 @@ export default function AdminDashboard() {
              setStats({
                  sales: totalSales,
                  orders: ordersData?.length || 0,
-                 customers: customersCount || 0
+                 customers: customersCount || 0,
+                 products: productsCount || 0
              });
          } catch (error) {
              console.error("Error fetching stats:", error);
@@ -89,6 +98,13 @@ export default function AdminDashboard() {
         path: '/admin/orders'
     },
     { 
+        title: 'Products', 
+        value: stats.products.toString(), 
+        icon: <Package className="text-zinc-600" size={20} />, 
+        color: 'text-black',
+        path: '/admin/products'
+    },
+    { 
         title: 'Customers', 
         value: stats.customers.toString(), 
         icon: <Users className="text-zinc-600" size={20} />, 
@@ -104,7 +120,7 @@ export default function AdminDashboard() {
           <p className="text-xs text-zinc-500 uppercase tracking-widest font-medium">Overview of your store's performance</p>
        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
           {statCards.map((card, idx) => (
              <motion.div 
                 key={`stat-${card.title.replace(/\s+/g, '-').toLowerCase()}`} 

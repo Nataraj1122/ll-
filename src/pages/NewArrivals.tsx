@@ -1,9 +1,10 @@
 import React from 'react';
 import { useSupabaseProducts } from '../hooks/useSupabaseData';
 import ProductCard from '../components/ProductCard';
+import DataErrorState from '../components/DataErrorState';
 
 export default function NewArrivals() {
-  const { products, loading } = useSupabaseProducts();
+  const { products, loading, error, refetch } = useSupabaseProducts();
   const newProducts = products.filter(p => p.isNewArrival);
 
   return (
@@ -18,11 +19,25 @@ export default function NewArrivals() {
           <h1 className="text-4xl md:text-9xl font-serif tracking-tight text-black">New Arrivals</h1>
         </header>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-10 md:gap-y-16">
-          {newProducts.map((product, idx) => (
-            <ProductCard key={`new-arrival-${product.id}-${idx}`} product={product} />
-          ))}
-        </div>
+        {error ? (
+          <DataErrorState message={error} onRetry={refetch} />
+        ) : loading ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-10 md:gap-y-16">
+            {[1,2,3,4,5,6,7,8].map(i => (
+              <div key={`new-arr-page-sk-${i}`} className="animate-pulse">
+                <div className="aspect-[3/4] bg-zinc-100 mb-6"></div>
+                <div className="h-4 bg-zinc-100 w-3/4 mb-2"></div>
+                <div className="h-4 bg-zinc-100 w-1/4"></div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-10 md:gap-y-16">
+            {newProducts.map((product, idx) => (
+              <ProductCard key={`new-arrival-${product.id}-${idx}`} product={product} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

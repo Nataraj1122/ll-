@@ -112,7 +112,7 @@ export default function MyOrders() {
         cancellationReason: 'Cancelled by customer'
       } : o));
       
-      setToastMessage('Your order has been cancelled successfully');
+      setToastMessage('Order cancelled successfully');
     } catch (error: any) {
       console.error("Cancel error:", error);
       setToastMessage(`Cancel failed: ${error.message || 'Unknown error'}`);
@@ -313,7 +313,7 @@ export default function MyOrders() {
                   disabled={cancellingId !== null}
                   className="flex-1 py-3 text-[10px] uppercase tracking-widest font-bold border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors rounded-sm disabled:opacity-50"
                 >
-                  Cancel
+                  Keep Order
                 </button>
                 <button 
                   onClick={confirmCancellation}
@@ -321,7 +321,7 @@ export default function MyOrders() {
                   className="flex-1 py-3 text-[10px] uppercase tracking-widest font-bold border border-rose-600 bg-rose-600 text-white hover:bg-rose-700 transition-colors rounded-sm flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {cancellingId !== null ? <Loader2 size={14} className="animate-spin" /> : null}
-                  Confirm Cancellation
+                  Cancel Order
                 </button>
               </div>
             </motion.div>

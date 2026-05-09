@@ -40,9 +40,9 @@ export default function CategoryPage() {
           {categoryProducts.length === 0 ? (
              <div className="col-span-full py-12 text-center text-zinc-500 text-sm font-semibold">No products found in this category.</div>
           ) : (
-            categoryProducts.map((item) => (
+            categoryProducts.map((item, idx) => (
               <motion.div 
-                key={`cat-prod-${item.id}`}
+                key={`cat-prod-${item.id}-${idx}`}
                 className="group cursor-pointer block"
                 whileHover={{ y: -10 }}
                 onClick={() => setSelectedProduct(item)}

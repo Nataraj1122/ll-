@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Mail, ArrowRight } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { ADMIN_EMAIL } from '../constants';
 import { supabase } from '../lib/supabase';
@@ -13,7 +12,6 @@ interface CustomerAuthModalProps {
 
 export default function CustomerAuthModal({ isOpen, onClose }: CustomerAuthModalProps) {
   const navigate = useNavigate();
-  const { loginWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
   
   const [authMethod, setAuthMethod] = useState<'google' | 'email'>('google');
   const [email, setEmail] = useState('');
@@ -21,6 +19,7 @@ export default function CustomerAuthModal({ isOpen, onClose }: CustomerAuthModal
   const [authType, setAuthType] = useState<'login' | 'signup'>('login');
   
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -30,6 +29,7 @@ export default function CustomerAuthModal({ isOpen, onClose }: CustomerAuthModal
        setPassword('');
        setAuthType('login');
        setError('');
+       setSuccessMessage(null);
        setLoading(false);
     }
   }, [isOpen]);
@@ -38,26 +38,19 @@ export default function CustomerAuthModal({ isOpen, onClose }: CustomerAuthModal
     try {
       setLoading(true);
       setError('');
-      console.log("Initiating Google Login...");
+      setSuccessMessage(null);
       
-      // Add a small delay for visual feedback
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin
+        }
+      });
+      if (error) throw error;
       
-      await loginWithGoogle();
-      // Note: Redirect happens automatically for OAuth
     } catch (err: any) {
       console.error("Google Login Error:", err);
-      let message = err.message || 'Authentication failed.';
-      
-      if (message.includes('provider is not enabled')) {
-        message = "GOOGLE AUTH NOT ENABLED: You must enable Google as an auth provider in your Supabase Dashboard (Authentication > Providers > Google).";
-      } else if (message.includes('redirect_uri_mismatch')) {
-        message = "REDIRECT URI MISMATCH: Ensure your Supabase Site URL or Redirect URIs include this preview URL.";
-      } else {
-        message = `Auth Issue: ${message}. Google Login often fails inside an iframe. Click the 'Open in New Tab' button below.`;
-      }
-      
-      setError(message);
+      setError(`Auth Issue: ${err.message || 'Authentication failed.'}. Google Login often fails inside an iframe. Click the 'Open in New Tab' button below.`);
     } finally {
        setLoading(false);
     }
@@ -71,18 +64,28 @@ export default function CustomerAuthModal({ isOpen, onClose }: CustomerAuthModal
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccessMessage(null);
 
     try {
       if (authType === 'signup') {
-        console.log("Attempting Sign Up for:", email);
-        await signUpWithEmail(email, password);
-        alert('Verification email sent! Please check your inbox to confirm your account before logging in.');
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+        if (error) throw error;
+        
+        setSuccessMessage('Your account has been created. Please check your email and verify your address before logging in.');
         setAuthType('login');
       } else {
-        console.log("Attempting Sign In for:", email);
-        await signInWithEmail(email, password);
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) throw error;
+        
         onClose();
         if (email === ADMIN_EMAIL) navigate('/admin');
+        else navigate('/');
       }
     } catch (err: any) {
       console.error("Auth Error:", err);
@@ -134,6 +137,12 @@ export default function CustomerAuthModal({ isOpen, onClose }: CustomerAuthModal
                   Open in New Tab to Sign In
                 </button>
               ) : null}
+            </div>
+        )}
+
+        {successMessage && (
+            <div className="mb-6 p-4 bg-green-50 text-green-600 border border-green-100 text-[11px] uppercase tracking-widest font-bold text-center leading-relaxed">
+              <p>{successMessage}</p>
             </div>
         )}
 

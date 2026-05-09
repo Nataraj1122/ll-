@@ -117,7 +117,7 @@ export default function Shop() {
         {productsLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-10 md:gap-y-16">
             {[1,2,3,4,5,6,7,8].map(i => (
-              <div key={`shop-sk-${i}`} className="animate-pulse">
+              <div key={`shop-page-skeleton-loader-${i}`} className="animate-pulse">
                 <div className="aspect-[3/4] bg-zinc-100 mb-6"></div>
                 <div className="h-4 bg-zinc-100 w-3/4 mb-2"></div>
                 <div className="h-4 bg-zinc-100 w-1/4"></div>
@@ -126,8 +126,8 @@ export default function Shop() {
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-10 md:gap-y-16">
-             {filteredProducts.map((product) => (
-               <ProductCard key={`shop-prod-${product.id}`} product={product} />
+             {filteredProducts.map((product, pIdx) => (
+               <ProductCard key={`shop-product-card-${product.id}-${pIdx}`} product={product} />
              ))}
           </div>
         )}

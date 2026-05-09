@@ -93,7 +93,7 @@ export default function Layout() {
           <div className="flex items-center gap-12">
             <Link 
               to="/" 
-              className={`text-2xl font-bold tracking-[-0.05em] font-serif uppercase transition-all duration-500 ${isTransparent ? 'opacity-0 pointer-events-none' : 'text-black opacity-100'}`}
+              className={`text-2xl font-bold tracking-[0.2em] font-serif uppercase transition-all duration-500 ${isTransparent ? 'invisible pointer-events-none' : 'text-black visible'}`}
             >
               RELOAD
             </Link>

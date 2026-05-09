@@ -11,7 +11,7 @@ import ProductCard from '../components/ProductCard';
 import { getSupabaseFileUrl } from '../lib/supabase';
 
 const IMAGES = {
-  hero: "https://images.unsplash.com/photo-1488161628813-04466f872be2?q=80&w=2564&auto=format&fit=crop",
+  hero: "https://i.pinimg.com/736x/cf/12/81/cf12814d8f31383e096a20150c5b9fbc.jpg",
   autumn: "https://images.unsplash.com/photo-1516826435551-36a8a09e4544?q=80&w=2670&auto=format&fit=crop",
   dolenga: "https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?q=80&w=2574&auto=format&fit=crop",
   summer: "https://images.unsplash.com/photo-1490367532201-b9bc1dc483f6?q=80&w=2670&auto=format&fit=crop"
@@ -23,27 +23,7 @@ export default function Home() {
   const { addToBag, toggleWishlist, isInWishlist } = useAppContext();
   const { hash } = useLocation();
   const navigate = useNavigate();
-  const [heroImg, setHeroImg] = useState(IMAGES.hero);
-  const [imageError, setImageError] = useState(false);
-
-  useEffect(() => {
-    // Attempt to load hero bg from Supabase banners bucket
-    const checkHeroBg = async () => {
-       try {
-         const supabaseHero = getSupabaseFileUrl('banners', 'hero-bg.jpg');
-         if (supabaseHero) {
-           // Create a test image to pre-verify if the URL is accessible
-           const img = new Image();
-           img.src = supabaseHero;
-           img.onload = () => setHeroImg(supabaseHero);
-           img.onerror = () => setHeroImg(IMAGES.hero);
-         }
-       } catch (e) {
-         setHeroImg(IMAGES.hero);
-       }
-    };
-    checkHeroBg();
-  }, []);
+  const heroImg = IMAGES.hero;
 
   useEffect(() => {
     if (hash) {
@@ -63,15 +43,6 @@ export default function Home() {
   const newArrivals = products.filter(p => p.isNewArrival);
 
   const trendingRef = useRef<HTMLDivElement>(null);
-  const heroRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: heroRef,
-    offset: ["start start", "end start"]
-  });
-
-  const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
-  const heroScale = useTransform(scrollYProgress, [0, 1], [1, 1.1]);
 
   const scrollTrending = (direction: 'left' | 'right') => {
     if (trendingRef.current) {
@@ -86,45 +57,37 @@ export default function Home() {
   return (
     <div className="bg-brand-bone overflow-x-hidden">
       {/* Hero Section - Premium Centered */}
-      <section ref={heroRef} className="relative h-screen w-full bg-zinc-900 overflow-hidden flex items-center justify-center">
-        {/* FALLBACK PATTERN */}
-        <div className="absolute inset-0 opacity-10 pointer-events-none" 
-             style={{ backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`, backgroundSize: '40px 40px' }} 
-        />
-        
+      <section className="relative h-[100dvh] w-full bg-[#111] overflow-hidden flex items-center justify-center">
         {/* MAIN IMAGE */}
-        <motion.div 
-          style={{ opacity: heroOpacity, y: heroY, scale: heroScale }}
-          className="absolute inset-0 w-full h-full"
-        >
+        <div className="absolute inset-0 w-full h-full bg-[#111]">
           <img 
-            src={imageError ? IMAGES.hero : heroImg} 
+            src={heroImg} 
             alt="Reload Premium Fashion"
-            onError={() => {
-              // Gracefully handle error without loud console message
-              if (!imageError) setImageError(true);
+            className="w-full h-full object-cover object-center"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
             }}
-            className="w-full h-full object-cover object-center grayscale-[20%] brightness-[0.6]"
           />
-          {/* subtle dark gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/90"></div>
-        </motion.div>
+          {/* Subtle dark overlay for text readability and cinematic feel */}
+          <div className="absolute inset-0 bg-black/30 pointer-events-none"></div>
+        </div>
 
-        {/* HERO CONTENT - REPOSITIONED AND ENSURED VISIBILITY */}
-        <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 min-h-screen pt-20">
+        {/* HERO CONTENT - CENTERED */}
+        <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 h-full w-full pt-20">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
-            className="flex flex-col items-center"
+            className="flex flex-col items-center justify-center w-full max-w-lg mt-auto mb-24 md:mb-32"
           >
-            {/* h1 removed as per user request */}
-            <p className="text-white/90 text-[11px] md:text-sm uppercase tracking-[0.5em] font-medium mb-8 ml-[0.5em]">
+            {/* Added a subtle subtitle to complement the image logo */}
+            <p className="text-white/90 text-xs md:text-sm uppercase tracking-[0.5em] md:tracking-[0.8em] font-medium mb-12 ml-[0.5em] font-sans">
               PREMIUM MENSWEAR
             </p>
+            
             <button 
               onClick={() => document.getElementById('trending')?.scrollIntoView({ behavior: 'smooth' })}
-              className="px-16 py-5 rounded-full bg-white text-black font-bold uppercase text-[11px] tracking-[0.3em] shadow-2xl hover:bg-black hover:text-white transition-all duration-500 active:scale-95"
+              className="px-12 md:px-16 py-4 md:py-5 rounded-full bg-white/95 backdrop-blur-sm text-black font-bold uppercase text-[10px] md:text-[11px] tracking-[0.3em] hover:bg-black hover:text-white transition-all duration-500 active:scale-95 w-[80%] md:w-auto"
             >
               SHOP NOW
             </button>
@@ -134,10 +97,10 @@ export default function Home() {
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.4 }}
-          transition={{ delay: 2, duration: 1 }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 z-10"
+          transition={{ delay: 1, duration: 1 }}
+          className="absolute bottom-8 md:bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 z-10 pointer-events-none"
         >
-          <div className="w-px h-16 bg-gradient-to-b from-white to-transparent opacity-50"></div>
+          <div className="w-px h-12 md:h-16 bg-gradient-to-b from-white to-transparent opacity-50"></div>
         </motion.div>
       </section>
 

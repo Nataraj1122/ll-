@@ -33,15 +33,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Sync user data to Supabase profiles table
   const syncAccount = async (user: User, additionalData: any = {}) => {
     try {
-      const basicData = {
-        id: user.id,
-        name: user.user_metadata?.name || user.user_metadata?.full_name || additionalData.name || 'User',
-        email: user.email || additionalData.email || '',
-      };
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      const userToSync = currentUser || user;
+      
+      if (!userToSync) return;
 
-      const { error } = await supabase
-        .from('profiles')
-        .upsert(basicData, { onConflict: 'id' });
+      const { error } = await supabase.from('profiles').upsert({
+        id: userToSync.id,
+        name: userToSync.user_metadata?.full_name || additionalData.name || userToSync.user_metadata?.name || 'User',
+        email: userToSync.email,
+        avatar: userToSync.user_metadata?.avatar_url
+      });
 
       if (error) throw error;
     } catch (error) {
@@ -76,31 +78,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    // Check active sessions and sets the user
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        syncAccount(session.user);
-        checkAdminStatus(session.user);
+    let mounted = true;
+
+    const initAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const user = session?.user ?? null;
+        if (mounted) {
+          setUser(user);
+          if (user) {
+            await checkAdminStatus(user);
+            syncAccount(user).catch(console.error);
+          }
+        }
+      } catch (err) {
+        console.error("Error during initial auth:", err);
+      } finally {
+        if (mounted) setLoading(false);
       }
-      setLoading(false);
-    });
+    };
+
+    initAuth();
+    
+    // Fallback: forcefully remove loading state after 2 seconds if supabase hangs
+    const timeout = setTimeout(() => {
+        if (mounted && loading) setLoading(false);
+    }, 2000);
 
     // Listen for changes on auth state (logged in, signed out, etc.)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const currentUser = session?.user ?? null;
+      if (!mounted) return;
+      
       setUser(currentUser);
       
       if (currentUser) {
-        await syncAccount(currentUser);
         await checkAdminStatus(currentUser);
+        syncAccount(currentUser).catch(console.error);
       } else {
         setIsAdmin(false);
       }
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const logout = async () => {

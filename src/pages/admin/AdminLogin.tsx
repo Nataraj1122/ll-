@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { supabase } from '../../lib/supabase';
 import { ArrowRight, Mail } from 'lucide-react';
+import { ADMIN_EMAIL } from '../../constants';
+import { useAuth } from '../../context/AuthContext';
 
 export default function AdminLogin() {
   const [error, setError] = useState('');
@@ -11,7 +13,7 @@ export default function AdminLogin() {
   const [password, setPassword] = useState('');
 
   const navigate = useNavigate();
-  const { user, isAdmin, loading, loginWithGoogle, signInWithEmail, logout } = useAuth();
+  const { user, isAdmin, loading, logout } = useAuth();
 
   useEffect(() => {
     if (!loading && user && isAdmin) {
@@ -24,14 +26,16 @@ export default function AdminLogin() {
     setError('');
 
     try {
-      await loginWithGoogle();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + '/admin'
+        }
+      });
+      if (error) throw error;
     } catch (err: any) {
       console.error("Login attempt failed:", err);
-      if (err.message?.includes('provider is not enabled')) {
-        setError("AUTHENTICATION ERROR: Google login is not enabled in your Supabase project. Enable it at Authentication > Providers > Google.");
-      } else {
-        setError(`Failed to login: ${err.message || 'Try opening in a new tab if you are using an iframe.'}`);
-      }
+      setError(`Failed to login: ${err.message || 'Try opening in a new tab if you are using an iframe.'}`);
       setIsSubmitting(false);
     }
   };
@@ -42,7 +46,18 @@ export default function AdminLogin() {
     setError('');
 
     try {
-      await signInWithEmail(email, password);
+      const { error, data } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) throw error;
+      
+      if (data.user?.email !== ADMIN_EMAIL) {
+        throw new Error("You do not have admin privileges.");
+      }
+
+      navigate('/admin');
     } catch (err: any) {
       console.error("Email login failed:", err);
       setError(err.message || 'Authentication failed');
@@ -50,7 +65,7 @@ export default function AdminLogin() {
     }
   };
 
-  if (loading || (user && isAdmin)) {
+  if (loading) {
     return <div className="min-h-screen flex justify-center items-center font-serif text-lg text-zinc-500">Loading...</div>;
   }
 

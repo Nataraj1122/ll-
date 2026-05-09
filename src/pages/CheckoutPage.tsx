@@ -29,6 +29,8 @@ export default function CheckoutPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const [orderError, setOrderError] = useState<string>('');
+
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     if (!formData.firstName) newErrors.firstName = 'Required';
@@ -53,26 +55,28 @@ export default function CheckoutPage() {
         return next;
       });
     }
+    setOrderError('');
   };
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     if (e) e.preventDefault();
+    setOrderError('');
     
     // 1. Validation: User logged in
     if (!user) {
-      alert('Please sign in to complete your purchase.');
+      setOrderError('Please sign in to complete your purchase.');
       return;
     }
 
     // 2. Validation: Cart not empty
     if (cartItems.length === 0) {
-      alert('Your cart is empty.');
+      setOrderError('Your cart is empty.');
       return;
     }
 
     // 3. Validation: Form fields
     if (!validateForm()) {
-      alert('Please fill in all required shipping details.');
+      setOrderError('Please fill in all required shipping details.');
       return;
     }
 
@@ -118,11 +122,10 @@ export default function CheckoutPage() {
       await clearCart();
       setSuccess(true);
       
-      alert('Order placed successfully!');
       // navigate('/my-orders'); // Handled by success state now
     } catch (error: any) {
       console.error("Error during Supabase order placement:", error);
-      alert(`Failed to place order: ${error.message || 'Unknown error'}`);
+      setOrderError(`Failed to place order: ${error.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -324,6 +327,12 @@ export default function CheckoutPage() {
                   <span className="font-sans font-bold">{formatINR(cartSubtotal)}</span>
                 </div>
               </div>
+              
+              {orderError && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 text-sm rounded">
+                  {orderError}
+                </div>
+              )}
 
               <button 
                 onClick={handlePlaceOrder}

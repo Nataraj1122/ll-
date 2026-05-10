@@ -25,9 +25,10 @@ export function useSupabaseCategories() {
           image: cat.image_url
         }])).values()));
       }
-    } catch (err) {
-      console.error("Error fetching Supabase categories:", err);
-      setError(err instanceof Error ? err.message : String(err));
+    } catch (err: any) {
+      console.error("Error fetching Supabase data:", err);
+      const message = err?.message || err?.error?.message || err?.error || String(err);
+      setError(typeof message === 'string' ? message : JSON.stringify(message));
     } finally {
       setLoading(false);
     }
@@ -90,10 +91,10 @@ export function useSupabaseProducts() {
           isNewArrival: p.is_new_arrival ?? true
         }])).values()));
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error fetching Supabase products:", err);
-      console.log('Products fetch error:', err);
-      setError(err instanceof Error ? err.message : String(err));
+      const message = err?.message || err?.error?.message || err?.error || String(err);
+      setError(typeof message === 'string' ? message : JSON.stringify(message));
     } finally {
       setLoading(false);
     }

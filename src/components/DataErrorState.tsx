@@ -11,8 +11,13 @@ export default function DataErrorState({ message, onRetry }: DataErrorStateProps
     <div className="flex flex-col items-center justify-center p-12 text-center border border-zinc-100 bg-zinc-50 rounded-lg">
       <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
       <h3 className="text-lg font-serif mb-2">Failed to Load Content</h3>
+      {message && (
+        <div className="bg-red-50 text-red-700 text-xs p-3 rounded mb-4 max-w-md border border-red-100 font-mono break-words">
+          {message}
+        </div>
+      )}
       <p className="text-sm text-zinc-500 mb-6 max-w-md">
-        {message || "There was a problem connecting to our database. Please check your connection and try again."}
+        There was a problem connecting to our database. Please check your connection and try again.
       </p>
       <button
         onClick={onRetry}

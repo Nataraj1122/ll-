@@ -71,10 +71,10 @@ export default function Home() {
           <img 
             src={heroImg} 
             alt="Reload Premium Menswear"
-            className="w-full h-full object-cover object-center"
+            className="w-full h-full object-cover object-center contrast-[1.05] brightness-[1.05]"
           />
-          {/* Dark Overlay for readability */}
-          <div className="absolute inset-0 bg-black/50 pointer-events-none"></div>
+          {/* Subtle gradient overlay to keep it soft */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"></div>
         </motion.div>
 
         {/* HERO CONTENT */}
@@ -91,7 +91,7 @@ export default function Home() {
             
             <button 
               onClick={() => document.getElementById('trending')?.scrollIntoView({ behavior: 'smooth' })}
-              className="px-8 py-3 bg-white text-black font-bold uppercase text-[10px] tracking-[0.3em] hover:bg-black hover:text-white border border-white transition-all duration-500"
+              className="px-8 py-3 bg-white/10 backdrop-blur-sm text-white font-medium uppercase text-[10px] tracking-[0.3em] hover:bg-white hover:text-black border border-white/40 transition-all duration-500"
             >
               SHOP NOW
             </button>

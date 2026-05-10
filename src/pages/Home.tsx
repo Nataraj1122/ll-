@@ -12,7 +12,7 @@ import DataErrorState from '../components/DataErrorState';
 import { getSupabaseFileUrl } from '../lib/supabase';
 
 const IMAGES = {
-  hero: "https://i.pinimg.com/736x/cf/12/81/cf12814d8f31383e096a20150c5b9fbc.jpg",
+  hero: "https://i.pinimg.com/736x/6e/86/7e/6e867e71afaacb7e72c3749aff2651fb.jpg",
   autumn: "https://images.unsplash.com/photo-1516826435551-36a8a09e4544?q=80&w=2670&auto=format&fit=crop",
   dolenga: "https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?q=80&w=2574&auto=format&fit=crop",
   summer: "https://images.unsplash.com/photo-1490367532201-b9bc1dc483f6?q=80&w=2670&auto=format&fit=crop"
@@ -62,49 +62,49 @@ export default function Home() {
 
   return (
     <div className="bg-brand-bone overflow-x-hidden">
-      {/* Hero Section - Premium Centered */}
+      {/* Hero Section - Premium Luxury */}
       <section className="relative h-[100dvh] w-full bg-[#111] overflow-hidden flex items-center justify-center">
-        {/* MAIN IMAGE */}
-        <div className="absolute inset-0 w-full h-full bg-zinc-900">
+        <motion.div 
+          style={{ scale: 1.1 }}
+          className="absolute inset-0 w-full h-full"
+        >
           <img 
             src={heroImg} 
-            alt="Reload Premium Fashion"
+            alt="Reload Premium Menswear"
             className="w-full h-full object-cover object-center"
           />
-          {/* Subtle dark overlay for text readability and cinematic feel */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-black/60 pointer-events-none"></div>
-        </div>
+          {/* Dark Overlay for readability */}
+          <div className="absolute inset-0 bg-black/50 pointer-events-none"></div>
+        </motion.div>
 
-        {/* HERO CONTENT - CENTERED */}
-        <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 h-full w-full pt-20">
+        {/* HERO CONTENT */}
+        <div className="relative z-10 flex flex-col items-center justify-end pb-24 h-full text-center px-6 w-full">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
-            className="flex flex-col items-center justify-center w-full max-w-lg mt-auto mb-24 md:mb-32"
+            transition={{ duration: 1.2, ease: 'easeOut' }}
+            className="flex flex-col items-center justify-center w-full max-w-3xl"
           >
-            {/* Added a subtle subtitle to complement the image logo */}
-            <p className="text-white/90 text-xs md:text-sm uppercase tracking-[0.5em] md:tracking-[0.8em] font-medium mb-12 ml-[0.5em] font-sans">
+            <p className="text-white text-sm md:text-lg uppercase tracking-[0.4em] mb-6 font-light">
               PREMIUM MENSWEAR
             </p>
             
             <button 
               onClick={() => document.getElementById('trending')?.scrollIntoView({ behavior: 'smooth' })}
-              className="px-12 md:px-16 py-4 md:py-5 rounded-full bg-white/95 backdrop-blur-sm text-black font-bold uppercase text-[10px] md:text-[11px] tracking-[0.3em] hover:bg-black hover:text-white transition-all duration-500 active:scale-95 w-[80%] md:w-auto"
+              className="px-8 py-3 bg-white text-black font-bold uppercase text-[10px] tracking-[0.3em] hover:bg-black hover:text-white border border-white transition-all duration-500"
             >
               SHOP NOW
             </button>
           </motion.div>
         </div>
 
+        {/* Subtle Fade-in on load */}
         <motion.div 
           initial={{ opacity: 0 }}
-          animate={{ opacity: 0.4 }}
-          transition={{ delay: 1, duration: 1 }}
-          className="absolute bottom-8 md:bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 z-10 pointer-events-none"
-        >
-          <div className="w-px h-12 md:h-16 bg-gradient-to-b from-white to-transparent opacity-50"></div>
-        </motion.div>
+          animate={{ opacity: 1 }}
+          transition={{ duration: 2 }}
+          className="absolute inset-0 bg-black/20 pointer-events-none"
+        ></motion.div>
       </section>
 
       {/* Categories - Refined Round */}

@@ -80,38 +80,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    const initAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const user = session?.user ?? null;
-        if (mounted) {
-          setUser(user);
-          if (user) {
-            await checkAdminStatus(user);
-            syncAccount(user).catch(console.error);
-          }
-        }
-      } catch (err) {
-        console.error("Error during initial auth:", err);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-
-    initAuth();
-    
-    // Fallback: forcefully remove loading state after 2 seconds if supabase hangs
-    const timeout = setTimeout(() => {
-        if (mounted && loading) setLoading(false);
-    }, 2000);
-
-    // Listen for changes on auth state (logged in, signed out, etc.)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      const currentUser = session?.user ?? null;
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
-      
+
+      const currentUser = session?.user ?? null;
       setUser(currentUser);
-      
+
       if (currentUser) {
         await checkAdminStatus(currentUser);
         syncAccount(currentUser).catch(console.error);
@@ -121,9 +96,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
+    // Initial session check
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      const user = session?.user ?? null;
+      setUser(user);
+      if (user) {
+        checkAdminStatus(user).catch(console.error);
+        syncAccount(user).catch(console.error);
+      }
+      setLoading(false);
+    });
+
     return () => {
       mounted = false;
-      clearTimeout(timeout);
       subscription.unsubscribe();
     };
   }, []);

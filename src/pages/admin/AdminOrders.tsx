@@ -53,23 +53,28 @@ export default function AdminOrders() {
 
     // Set up real-time subscription
     const channel = supabase
-      .channel('orders')
+      .channel('admin_orders_page_unique_channel')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders' },
         (payload) => {
-          console.log('Realtime update received:', payload);
+          console.log('Realtime update received in AdminOrders, payload:', payload);
           fetchOrders();
         }
       )
       .subscribe();
 
     return () => {
+      console.log('Unsubscribing AdminOrders realtime channel');
       supabase.removeChannel(channel);
     };
   }, []);
 
-  console.log('Admin Orders:', orders);
+  useEffect(() => {
+    console.log('Orders state updated:', orders);
+  }, [orders]);
+
+  console.log('Admin Orders - current render state:', orders);
 
   const filteredOrders = filter === 'All' 
     ? orders 

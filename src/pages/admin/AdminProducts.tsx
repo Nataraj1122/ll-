@@ -100,21 +100,34 @@ export default function AdminProducts() {
   const uploadImage = async () => {
     if (!file) return null;
     
+    console.log(`[AdminProducts] Attempting to upload image: ${file.name}`);
     const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-    const filePath = `${fileName}`;
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+    // User requested bucket path uses: products/
+    // Since we use .from('products'), we just need the filename.
+    const filePath = fileName;
 
-    const { error } = await withTimeout(supabase.storage
-      .from('products')
-      .upload(filePath, file)) as any;
+    try {
+      const { data, error } = await withTimeout(supabase.storage
+        .from('products')
+        .upload(filePath, file), 15000) as any;
 
-    if (error) throw error;
+      if (error) {
+        console.error(`[AdminProducts] Storage upload error:`, error);
+        throw error;
+      }
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('products')
-      .getPublicUrl(filePath);
+      console.log(`[AdminProducts] Upload successful, file path: ${filePath}`);
+      const { data: { publicUrl } } = supabase.storage
+        .from('products')
+        .getPublicUrl(filePath);
 
-    return publicUrl;
+      console.log(`[AdminProducts] Generated public URL: ${publicUrl}`);
+      return filePath; // Store the relative path instead of full URL for flexibility
+    } catch (err: any) {
+      console.error(`[AdminProducts] Upload operation failed:`, err.message);
+      throw err;
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -130,9 +143,9 @@ export default function AdminProducts() {
       let finalImageUrl = images.split('\n')[0]?.trim() || '';
 
       if (file) {
-        const uploadedUrl = await uploadImage();
-        if (uploadedUrl) {
-          finalImageUrl = uploadedUrl;
+        const uploadedPath = await uploadImage();
+        if (uploadedPath) {
+          finalImageUrl = uploadedPath;
         }
       }
 
@@ -378,9 +391,10 @@ export default function AdminProducts() {
                        {(file || images.split('\n')[0]) && (
                           <div className="mt-4 p-4 bg-zinc-50 border border-zinc-100 flex items-center gap-4">
                              <img 
-                                src={file ? URL.createObjectURL(file) : images.split('\n')[0]} 
+                                src={file ? URL.createObjectURL(file) : (images.split('\n')[0]?.startsWith('http') ? images.split('\n')[0] : (images.split('\n')[0] ? supabase.storage.from('products').getPublicUrl(images.split('\n')[0]).data.publicUrl : FALLBACK_IMAGE))} 
                                 alt="Preview" 
                                 className="w-16 h-20 object-cover bg-white border border-zinc-200"
+                                onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
                              />
                              <div>
                                 <p className="text-[10px] font-bold uppercase tracking-widest">Preview</p>

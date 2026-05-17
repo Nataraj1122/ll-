@@ -10,7 +10,7 @@ interface ProductCardProps {
   product: Product;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+const ProductCard = React.memo(({ product }: ProductCardProps) => {
   const { toggleWishlist, isInWishlist, addToBag } = useAppContext();
   const [selectedSize, setSelectedSize] = useState('M');
   const [isLoaded, setIsLoaded] = useState(false);
@@ -123,6 +123,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </div>
     </motion.div>
   );
-};
+});
 
 export default ProductCard;

@@ -46,10 +46,12 @@ export async function withTimeout<T>(promise: Promise<T> | PromiseLike<T>, timeo
     const result = await Promise.race([promise as any, timeoutPromise]);
     return result as T;
   } catch (err: any) {
-    if (err.message?.includes('timed out') && fallbackValue !== undefined) {
-      console.warn(`Timeout reached, returning fallback value:`, fallbackValue);
+    if ((err.message?.includes('timed out') || err.message?.includes('timeout')) && fallbackValue !== undefined) {
+      console.warn(`Timeout reached for operation, returning fallback value:`, fallbackValue);
       return fallbackValue;
     }
+    console.warn(`Operation failed or timed out:`, err.message);
+    if (fallbackValue !== undefined) return fallbackValue;
     throw err;
   } finally {
     clearTimeout(timeoutId);

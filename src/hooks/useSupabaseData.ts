@@ -29,27 +29,36 @@ export function useSupabaseCategories() {
       const { data, error: sbError } = await withTimeout(supabase
         .from('categories')
         .select('*')
-        .order('name'), 12000, { data: null, error: null } as any) as any;
+        .order('name'), 12000, { data: categories.length > 0 ? null : [], error: null } as any) as any;
       
       if (sbError) {
         console.error("Supabase categories query failed:", sbError);
-        throw sbError;
+        // Don't throw if we have some categories already
+        if (categories.length === 0) throw sbError;
+        return;
       }
       
       console.log(`Successfully fetched ${data?.length || 0} categories`);
       
       if (data && data.length > 0) {
-        const mappedCategories = Array.from(new Map(data.map((cat: CategoryTable) => [cat.id, {
-          id: cat.id,
-          name: cat.name || 'Uncategorized',
-          image: cat.image_url || FALLBACK_IMAGE
-        }])).values()) as Category[];
+        const mappedCategories = data.map((cat: CategoryTable) => {
+          let imageUrl = cat.image_url || '';
+          if (imageUrl && !imageUrl.startsWith('http')) {
+            console.log(`[useSupabaseCategories] Constructing URL for relative path: ${imageUrl}`);
+            imageUrl = supabase.storage.from('products').getPublicUrl(imageUrl).data.publicUrl;
+          }
+          if (!imageUrl) {
+            console.warn(`[useSupabaseCategories] Category ${cat.name} missing image, using fallback.`);
+            imageUrl = FALLBACK_IMAGE;
+          }
+          return {
+            id: cat.id,
+            name: cat.name || 'Uncategorized',
+            image: imageUrl
+          };
+        }) as Category[];
         
         setCategories(mappedCategories);
-      } else if (!data || data.length === 0) {
-        console.warn("No categories found in the database table 'categories'");
-        setCategories([]);
-        return;
       }
     } catch (err: any) {
       console.error("Critical error in useSupabaseCategories:", err);
@@ -167,7 +176,7 @@ export function useSupabaseProducts(limit = 20, page = 1) {
     const processProducts = (data: any[]) => {
       if (!data || data.length === 0) {
         console.warn("[useSupabaseProducts] Zero products returned from DB.");
-        if (products.length <= 3) { // If we only have demo data
+        if (products.length <= 3) {
            setProducts(DEMO_PRODUCTS);
         }
         return;
@@ -175,7 +184,35 @@ export function useSupabaseProducts(limit = 20, page = 1) {
 
       try {
         const mappedProducts = data.map((p: any) => {
-          const imageUrl = p.image_url || p.image || p.imageUrl || (p.images && p.images[0]) || FALLBACK_IMAGE;
+          let imageUrls: string[] = [];
+          
+          const rawImages = p.image_url || p.image || p.imageUrl || p.images;
+          
+          if (Array.isArray(rawImages)) {
+            imageUrls = rawImages.filter(Boolean);
+          } else if (typeof rawImages === 'string' && rawImages) {
+            imageUrls = [rawImages];
+          }
+
+          // Transform relative paths to full Supabase URLs
+          const transformedImages = imageUrls.map(url => {
+            if (url && !url.startsWith('http')) {
+              // If it's just a filename, assume it's in 'products' bucket
+              console.log(`[useSupabaseProducts] Constructing URL for relative path: ${url}`);
+              return supabase.storage.from('products').getPublicUrl(url).data.publicUrl;
+            }
+            if (!url) {
+               console.warn(`[useSupabaseProducts] Product ${p.name} has an empty image slot.`);
+               return FALLBACK_IMAGE;
+            }
+            return url;
+          });
+
+          if (transformedImages.length === 0) {
+            console.warn(`[useSupabaseProducts] Product ${p.name} has no images, using fallback.`);
+            transformedImages.push(FALLBACK_IMAGE);
+          }
+
           const catId = p.category_id || p.categoryId || p.category || 'all';
           const active = p.is_active ?? p.isActive ?? p.active ?? true;
           const trending = p.is_trending ?? p.isTrending ?? p.trending ?? false;
@@ -186,7 +223,7 @@ export function useSupabaseProducts(limit = 20, page = 1) {
             name: p.name || 'Untitled Product',
             price: Number(p.price) || 0,
             categoryId: catId,
-            images: Array.isArray(imageUrl) ? imageUrl : [imageUrl].filter(Boolean),
+            images: transformedImages,
             description: p.description || '',
             stock: p.stock_quantity || p.stock || 0,
             sizes: Array.isArray(p.sizes) ? p.sizes : (typeof p.sizes === 'string' ? p.sizes.split(',').map((s:string)=>s.trim()) : ['S', 'M', 'L', 'XL']),
@@ -205,27 +242,31 @@ export function useSupabaseProducts(limit = 20, page = 1) {
       }
     };
 
-    try {
-      // Logic for range
-      const from = (page - 1) * limit;
-      const to = from + limit - 1;
-      
-      // Step 1: Optimized query with larger timeout
-      const { data, error: sbError } = await withTimeout(supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .range(from, to), 12000, { data: null, error: null } as any) as any;
-      
-      if (sbError) {
-        console.warn("[useSupabaseProducts] Main query failed, trying minimal select...", sbError.message);
-        const { data: minData, error: minError } = await withTimeout(supabase.from('products').select('*').limit(limit), 8000, { data: null, error: null } as any) as any;
-        if (minError) throw minError;
-        if (minData) processProducts(minData);
-      } else if (data) {
-        processProducts(data);
-      }
-    } catch (err: any) {
+      try {
+        // Logic for range
+        const from = (page - 1) * limit;
+        const to = from + limit - 1;
+        
+        // Step 1: Optimized query with larger timeout
+        const { data, error: sbError } = await withTimeout(supabase
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .range(from, to), 12000, { data: products.length > 0 ? null : [], error: null } as any) as any;
+        
+        if (sbError) {
+          console.warn("[useSupabaseProducts] Main query failed, trying minimal select...", sbError.message);
+          const { data: minData, error: minError } = await withTimeout(supabase.from('products').select('*').limit(limit), 8000, { data: products.length > 0 ? null : [], error: null } as any) as any;
+          if (minError) {
+            // If we have some products, don't crash the UI with error
+            if (products.length > 0) return;
+            throw minError;
+          }
+          if (minData) processProducts(minData);
+        } else if (data) {
+          processProducts(data);
+        }
+      } catch (err: any) {
       console.error("[useSupabaseProducts] Fetch error:", err);
       // Only set error if we have literally no products (not even demo ones)
       if (products.length === 0) {

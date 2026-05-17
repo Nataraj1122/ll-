@@ -20,7 +20,7 @@ const IMAGES = {
 
 export default function Home() {
   const { categories, loading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useSupabaseCategories();
-  const { products, loading: productsLoading, error: productsError, refetch: refetchProducts } = useSupabaseProducts(50);
+  const { products, loading: productsLoading, error: productsError, refetch: refetchProducts } = useSupabaseProducts(20);
   const { addToBag, toggleWishlist, isInWishlist } = useAppContext();
   const { hash } = useLocation();
   const navigate = useNavigate();

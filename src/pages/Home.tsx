@@ -151,7 +151,7 @@ export default function Home() {
       </section>
 
       {/* Trending Section - Horizontal Carousel */}
-      <section id="trending" className="py-8 md:py-16 overflow-hidden bg-brand-bone border-y border-zinc-50">
+      <section id="trending" className="pt-4 pb-0 md:py-16 overflow-hidden bg-brand-bone border-y border-zinc-50">
         <div className="max-w-7xl mx-auto px-6 mb-6 md:mb-12 flex justify-between items-end">
           <div>
             <h2 className="text-xl md:text-5xl font-serif text-zinc-900 mb-1 md:mb-4 uppercase tracking-tight">Trending</h2>
@@ -204,7 +204,7 @@ export default function Home() {
       </section>
 
       {/* Dolenga Modernity - Box with Image */}
-      <section className="py-16 px-6">
+      <section className="pt-0 pb-8 px-6 md:py-16">
         <div className="max-w-7xl mx-auto flex justify-center">
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}

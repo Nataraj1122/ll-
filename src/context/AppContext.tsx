@@ -49,15 +49,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         .eq('user_id', user.id);
       
       if (!error && data) {
-        setCartItems(Array.from(new Map(data.map(item => [item.cart_item_id, {
+        setCartItems(Array.from(new Map(data.map((item: any) => [item.cart_item_id, {
           id: item.product_id,
           cartItemId: item.cart_item_id,
           name: item.name,
           price: item.price,
-          image: item.image_url,
+          image: item.image_url || '',
           size: item.size,
           quantity: item.quantity
-        }])).values()));
+        } as CartItem])).values()));
       }
     };
 
@@ -92,12 +92,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         .eq('user_id', user.id);
       
       if (!error && data) {
-        setWishlistItems(Array.from(new Map(data.map(item => [item.products.id, {
+        setWishlistItems(Array.from(new Map(data.map((item: any) => [item.products.id, {
           id: item.products.id,
           name: item.products.name,
           price: item.products.price,
-          image: item.products.image_url
-        }])).values()));
+          image: item.products.image_url || ''
+        } as WishlistItem])).values()));
       }
     };
 
@@ -128,7 +128,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           cartItemId, 
           name: product.name, 
           price: product.price, 
-          image: product.images[0], 
+          image: product.images[0] || '', 
           size, 
           quantity
         };
@@ -234,8 +234,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           id: product.id,
           name: product.name,
           price: product.price,
-          image: product.images[0]
-        }];
+          image: product.images[0] || ''
+        } as WishlistItem];
       });
     }
   };

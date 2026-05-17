@@ -161,7 +161,7 @@ export default function Layout() {
                        >
                          <div className="px-4 py-2 border-b border-zinc-100 mb-2">
                            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Account</p>
-                           <p className="text-xs font-semibold truncate text-black">{user.displayName || user.email}</p>
+                           <p className="text-xs font-semibold truncate text-black">{(user.user_metadata as any)?.full_name || user.email}</p>
                          </div>
                          <Link 
                            to="/my-orders" 

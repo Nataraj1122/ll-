@@ -11,7 +11,7 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { toggleWishlist, isInWishlist, addToBag } = useAppContext();
-  const [selectedSize, setSelectedSize] = useState('M');
+  const [selectedSize] = useState('M');
   const [isLoaded, setIsLoaded] = useState(false);
 
   return (

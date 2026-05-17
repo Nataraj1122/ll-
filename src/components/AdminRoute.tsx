@@ -2,7 +2,11 @@ import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-export default function AdminRoute() {
+interface AdminRouteProps {
+  children?: React.ReactNode;
+}
+
+export default function AdminRoute({ children }: AdminRouteProps) {
   const { user, isAdmin, loading } = useAuth();
 
   if (loading) {
@@ -17,5 +21,5 @@ export default function AdminRoute() {
     return <Navigate to="/admin/login" replace />;
   }
 
-  return <Outlet />;
+  return children ? <>{children}</> : <Outlet />;
 }

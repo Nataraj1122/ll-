@@ -101,7 +101,7 @@ export default function AdminProducts() {
     const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
     const filePath = `${fileName}`;
 
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('products')
       .upload(filePath, file);
 

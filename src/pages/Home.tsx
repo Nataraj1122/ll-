@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'motion/react';
-import { ArrowRight, Heart, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Heart, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSupabaseCategories, useSupabaseProducts } from '../hooks/useSupabaseData';
 import { useAppContext } from '../context/AppContext';
@@ -9,7 +9,6 @@ import { Product } from '../types';
 import { ProductSkeleton, CategorySkeleton } from '../components/Skeleton';
 import ProductCard from '../components/ProductCard';
 import DataErrorState from '../components/DataErrorState';
-import { getSupabaseFileUrl } from '../lib/supabase';
 
 const IMAGES = {
   hero: "https://i.pinimg.com/736x/6e/86/7e/6e867e71afaacb7e72c3749aff2651fb.jpg",

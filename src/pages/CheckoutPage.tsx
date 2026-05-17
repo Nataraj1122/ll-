@@ -8,7 +8,7 @@ import { ShoppingBag, ChevronRight, CheckCircle2, Truck, CreditCard } from 'luci
 import { supabase } from '../lib/supabase';
 
 export default function CheckoutPage() {
-  const { cartItems, cartSubtotal, clearCart, cartTotalCount } = useAppContext();
+  const { cartItems, cartSubtotal, clearCart } = useAppContext();
   const { user } = useAuth();
   const navigate = useNavigate();
   

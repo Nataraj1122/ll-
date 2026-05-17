@@ -1,10 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Filter, SlidersHorizontal, X } from 'lucide-react';
+import { SlidersHorizontal, X } from 'lucide-react';
 import { useSupabaseProducts, useSupabaseCategories } from '../hooks/useSupabaseData';
-import { useAppContext } from '../context/AppContext';
-import { Product } from '../types';
-import { formatINR } from '../lib/utils';
 import ProductCard from '../components/ProductCard';
 import DataErrorState from '../components/DataErrorState';
 

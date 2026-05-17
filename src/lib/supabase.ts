@@ -24,6 +24,26 @@ export const supabase = createClient(
   supabaseAnonKey || DEFAULT_KEY
 )
 
+/**
+ * Helper to wrap promises with a timeout
+ */
+export async function withTimeout<T>(promise: Promise<T> | PromiseLike<T>, timeoutMs = 8000): Promise<T> {
+  let timeoutId: any;
+  const timeoutPromise = new Promise<T>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error(`Operation timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+
+  try {
+    // Cast to any to avoid complex Promise vs PromiseLike conflicts in race
+    const result = await Promise.race([promise as any, timeoutPromise]);
+    return result as T;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 export const getSupabaseFileUrl = (bucket: string, path: string) => {
   if (!path) return '';
   const { data } = supabase.storage.from(bucket).getPublicUrl(path);

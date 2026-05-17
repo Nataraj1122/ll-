@@ -5,7 +5,7 @@ import { Order } from '../types';
 import { formatINR } from '../lib/utils';
 import { ShoppingBag, Package, Truck, CheckCircle, XCircle, Clock, ChevronRight, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 
 export default function MyOrders() {
   const { user } = useAuth();

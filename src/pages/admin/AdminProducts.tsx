@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase, withTimeout } from '../../lib/supabase';
 import { useSupabaseCategories, useSupabaseProducts } from '../../hooks/useSupabaseData';
 import { Product } from '../../types';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { Edit2, Trash2, Plus, X, AlertTriangle, CheckCircle } from 'lucide-react';
 import { formatINR } from '../../lib/utils';
 import DataErrorState from '../../components/DataErrorState';
@@ -81,10 +81,10 @@ export default function AdminProducts() {
     if (!deletingProduct) return;
     setSubmitting(true);
     try {
-       const { error } = await supabase
+       const { error } = await withTimeout(supabase
          .from('products')
          .delete()
-         .eq('id', deletingProduct.id);
+         .eq('id', deletingProduct.id)) as any;
        
        if (error) throw error;
        setDeletingProduct(null);
@@ -104,9 +104,9 @@ export default function AdminProducts() {
     const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
     const filePath = `${fileName}`;
 
-    const { error } = await supabase.storage
+    const { error } = await withTimeout(supabase.storage
       .from('products')
-      .upload(filePath, file);
+      .upload(filePath, file)) as any;
 
     if (error) throw error;
 
@@ -154,15 +154,15 @@ export default function AdminProducts() {
       };
 
       if (editingProduct) {
-        const { error } = await supabase
+        const { error } = await withTimeout(supabase
           .from('products')
           .update(productData)
-          .eq('id', editingProduct.id);
+          .eq('id', editingProduct.id)) as any;
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { error } = await withTimeout(supabase
           .from('products')
-          .insert([productData]);
+          .insert([productData])) as any;
         if (error) throw error;
       }
       

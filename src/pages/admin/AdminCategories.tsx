@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase, withTimeout } from '../../lib/supabase';
 import { useSupabaseCategories } from '../../hooks/useSupabaseData';
 import { Category } from '../../types';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { Edit2, Trash2, Plus, X, AlertTriangle } from 'lucide-react';
 import DataErrorState from '../../components/DataErrorState';
 
@@ -62,15 +62,15 @@ export default function AdminCategories() {
       };
 
       if (editingCategory) {
-        const { error } = await supabase
+        const { error } = await withTimeout(supabase
           .from('categories')
           .update(catData)
-          .eq('id', editingCategory.id);
+          .eq('id', editingCategory.id)) as any;
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { error } = await withTimeout(supabase
           .from('categories')
-          .insert([catData]);
+          .insert([catData])) as any;
         if (error) throw error;
       }
       setIsModalOpen(false);

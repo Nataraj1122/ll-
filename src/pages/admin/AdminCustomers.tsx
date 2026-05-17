@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase, withTimeout } from '../../lib/supabase';
 import { Customer, Order } from '../../types';
 import { ProfileTable, OrderTable } from '../../supabase-types';
 import { formatINR } from '../../lib/utils';
 import { User, ChevronDown, ChevronUp, Package, Clock, CheckCircle, XCircle, Truck } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 
 export default function AdminCustomers() {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -20,18 +20,18 @@ export default function AdminCustomers() {
   const fetchData = async () => {
     try {
       // Fetch customers (profiles)
-      const { data: profileData, error: profileError } = await supabase
+      const { data: profileData, error: profileError } = await withTimeout(supabase
         .from('profiles')
         .select('*')
-        .order('created_at', { ascending: false }) as { data: ProfileTable[] | null, error: any };
+        .order('created_at', { ascending: false })) as any;
 
       if (profileError) throw profileError;
 
       // Fetch orders
-      const { data: orderData, error: orderError } = await supabase
+      const { data: orderData, error: orderError } = await withTimeout(supabase
         .from('orders')
         .select('*')
-        .order('created_at', { ascending: false }) as { data: OrderTable[] | null, error: any };
+        .order('created_at', { ascending: false })) as any;
 
       if (orderError) throw orderError;
 

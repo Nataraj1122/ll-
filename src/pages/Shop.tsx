@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { SlidersHorizontal, X } from 'lucide-react';
 import { useSupabaseProducts, useSupabaseCategories } from '../hooks/useSupabaseData';
 import ProductCard from '../components/ProductCard';

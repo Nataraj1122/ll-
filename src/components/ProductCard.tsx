@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { Heart, X } from 'lucide-react';
 import { formatINR } from '../lib/utils';
 import { Product } from '../types';

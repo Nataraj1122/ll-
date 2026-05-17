@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, withTimeout } from '../lib/supabase';
 import { Product, Category } from '../types';
 import { CategoryTable, ProductTable } from '../supabase-types';
 
@@ -11,12 +11,23 @@ export function useSupabaseCategories() {
   const fetchCategories = useCallback(async () => {
     setLoading(true);
     setError(null);
+    
+    const fetchTimeout = setTimeout(() => {
+      setLoading(currentLoading => {
+        if (currentLoading) {
+          console.warn("[useSupabaseCategories] Fetch timeout reached (15s). Forcing loading to false.");
+          return false;
+        }
+        return currentLoading;
+      });
+    }, 15000);
+
     try {
       console.log("Fetching categories from Supabase...");
-      const { data, error: sbError } = await supabase
+      const { data, error: sbError } = await withTimeout(supabase
         .from('categories')
         .select('*')
-        .order('name') as { data: CategoryTable[] | null, error: any };
+        .order('name')) as any;
       
       if (sbError) {
         console.error("Supabase categories query failed:", sbError);
@@ -25,24 +36,25 @@ export function useSupabaseCategories() {
       
       console.log(`Successfully fetched ${data?.length || 0} categories`);
       
-      if (!data || data.length === 0) {
+      if (data && data.length > 0) {
+        const mappedCategories = Array.from(new Map(data.map((cat: CategoryTable) => [cat.id, {
+          id: cat.id,
+          name: cat.name || 'Uncategorized',
+          image: cat.image_url || ''
+        }])).values()) as Category[];
+        
+        setCategories(mappedCategories);
+      } else if (!data || data.length === 0) {
         console.warn("No categories found in the database table 'categories'");
         setCategories([]);
         return;
       }
-      
-      const mappedCategories = Array.from(new Map(data.map((cat: CategoryTable) => [cat.id, {
-        id: cat.id,
-        name: cat.name || 'Uncategorized',
-        image: cat.image_url || ''
-      }])).values());
-      
-      setCategories(mappedCategories);
     } catch (err: any) {
       console.error("Critical error in useSupabaseCategories:", err);
       const message = err?.message || err?.error?.message || err?.error || String(err);
       setError(typeof message === 'string' ? message : JSON.stringify(message));
     } finally {
+      clearTimeout(fetchTimeout);
       setLoading(false);
     }
   }, []);
@@ -125,18 +137,29 @@ export function useSupabaseProducts(limit = 20, page = 1) {
       return DEMO_PRODUCTS;
     }
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    // Start with loading true only if no cache to show skeletons once, then favor speed
+    return !sessionStorage.getItem('cached_products');
+  });
   const [error, setError] = useState<string | null>(null);
 
   const fetchProducts = useCallback(async () => {
-    setLoading(true);
+    // Only show loading skeletons if we have no products yet
+    if (products.length === 0) {
+      setLoading(true);
+    }
     setError(null);
     console.log(`[useSupabaseProducts] Fetching... limit: ${limit}, page: ${page}`);
     
     const fetchTimeout = setTimeout(() => {
-      if (loading) {
-        console.warn("[useSupabaseProducts] Fetch is taking > 15s. Check network or Supabase status.");
-      }
+      // Use the functional update to check if still loading
+      setLoading(currentLoading => {
+        if (currentLoading) {
+          console.warn("[useSupabaseProducts] Fetch timeout reached (15s). Forcing loading to false.");
+          return false;
+        }
+        return currentLoading;
+      });
     }, 15000);
 
     const processProducts = (data: any[]) => {
@@ -186,15 +209,15 @@ export function useSupabaseProducts(limit = 20, page = 1) {
       const to = from + limit - 1;
       
       // Step 1: Optimized query
-      const { data, error: sbError } = await supabase
+      const { data, error: sbError } = await withTimeout(supabase
         .from('products')
         .select('*')
         .order('created_at', { ascending: false })
-        .range(from, to);
+        .range(from, to)) as any;
       
       if (sbError) {
         console.warn("[useSupabaseProducts] Main query failed, trying minimal select...", sbError.message);
-        const { data: minData, error: minError } = await supabase.from('products').select('*').limit(limit);
+        const { data: minData, error: minError } = await withTimeout(supabase.from('products').select('*').limit(limit)) as any;
         if (minError) throw minError;
         if (minData) processProducts(minData);
       } else if (data) {

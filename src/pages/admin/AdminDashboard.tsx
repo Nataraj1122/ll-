@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase, withTimeout } from '../../lib/supabase';
 import { formatINR } from '../../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, Users, BadgeIndianRupee, ArrowRight, Package } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -19,28 +19,28 @@ export default function AdminDashboard() {
      const fetchStats = async () => {
          try {
              // Fetch non-cancelled orders for sales and count
-             const { data: ordersData, error: ordersError } = await supabase
+             const { data: ordersData, error: ordersError } = await withTimeout(supabase
                .from('orders')
-               .select('total_price, status');
+               .select('total_price, status')) as any;
              
              if (ordersError) throw ordersError;
 
              // Fetch customers count from profiles
-             const { count: customersCount, error: profilesError } = await supabase
+             const { count: customersCount, error: profilesError } = await withTimeout(supabase
                .from('profiles')
-               .select('*', { count: 'exact', head: true });
+               .select('*', { count: 'exact', head: true })) as any;
              
              if (profilesError) throw profilesError;
 
              // Fetch products count
-             const { count: productsCount, error: productsError } = await supabase
+             const { count: productsCount, error: productsError } = await withTimeout(supabase
                .from('products')
-               .select('*', { count: 'exact', head: true });
+               .select('*', { count: 'exact', head: true })) as any;
              
              if (productsError) throw productsError;
 
              let totalSales = 0;
-             ordersData?.forEach(order => {
+             ordersData?.forEach((order: any) => {
                  if (order.status?.toLowerCase() !== 'cancelled') {
                     totalSales += order.total_price || 0;
                  }

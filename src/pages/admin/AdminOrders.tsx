@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase, withTimeout } from '../../lib/supabase';
 import { Order } from '../../types';
 import { OrderTable } from '../../supabase-types';
 import { formatINR } from '../../lib/utils';
 import { ChevronDown, ChevronUp, Package, Clock, Truck, CheckCircle, XCircle } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -15,10 +15,10 @@ export default function AdminOrders() {
 
   const fetchOrders = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await withTimeout(supabase
         .from('orders')
         .select('*')
-        .order('created_at', { ascending: false }) as { data: OrderTable[] | null, error: any };
+        .order('created_at', { ascending: false })) as any;
 
       if (error) throw error;
 
@@ -94,10 +94,10 @@ export default function AdminOrders() {
         updateData.cancellation_reason = null;
       }
 
-      const { error } = await supabase
+      const { error } = await withTimeout(supabase
         .from('orders')
         .update(updateData)
-        .eq('id', id);
+        .eq('id', id)) as any;
 
       if (error) throw error;
       fetchOrders(); // Refresh local state

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import { supabase, withTimeout } from '../lib/supabase';
 import { ADMIN_EMAIL } from '../constants';
 
 interface AuthContextType {
@@ -33,18 +33,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Sync user data to Supabase profiles table
   const syncAccount = async (user: User, additionalData: any = {}) => {
     try {
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      const getUserPromise = supabase.auth.getUser();
+      const { data: { user: currentUser } } = await withTimeout(getUserPromise) as any;
       const userToSync = currentUser || user;
       
       if (!userToSync) return;
 
       const metadata = userToSync.user_metadata || {};
-      const { error } = await supabase.from('profiles').upsert({
+      const { error } = await withTimeout(supabase.from('profiles').upsert({
         id: userToSync.id,
         full_name: metadata.full_name || additionalData.name || metadata.name || 'User',
         email: userToSync.email,
         avatar_url: metadata.avatar_url || metadata.picture
-      });
+      })) as any;
 
       if (error) {
         console.warn("Profile sync warning (this is normal if table schema differs):", error.message);
@@ -63,11 +64,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // 2. Database check
     try {
-      const { data, error } = await supabase
+      const { data, error } = await withTimeout(supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
-        .maybeSingle();
+        .maybeSingle()) as any;
 
       if (error) {
         // If role doesn't exist or profile doesn't exist, just ignore
@@ -107,16 +108,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     // Initial session check
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!mounted) return;
-      const user = session?.user ?? null;
-      setUser(user);
-      if (user) {
-        checkAdminStatus(user).catch(console.error);
-        syncAccount(user).catch(console.error);
-      }
-      setLoading(false);
-    });
+    const authTimeout = setTimeout(() => {
+      setLoading(currentLoading => {
+        if (currentLoading) {
+          console.warn("[AuthContext] Session check timeout (10s). Forcing loading back to false.");
+          return false;
+        }
+        return currentLoading;
+      });
+    }, 10000);
+
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        clearTimeout(authTimeout);
+        if (!mounted) return;
+        
+        const user = session?.user ?? null;
+        setUser(user);
+        
+        if (user) {
+          withTimeout(checkAdminStatus(user), 5000).catch(err => {
+            console.error("[AuthContext] Admin check failed or timed out:", err);
+          });
+          withTimeout(syncAccount(user), 5000).catch(err => {
+            console.error("[AuthContext] Sync account failed or timed out:", err);
+          });
+        }
+        setLoading(false);
+      })
+      .catch(err => {
+        clearTimeout(authTimeout);
+        console.error("[AuthContext] Session fetch error:", err);
+        if (mounted) setLoading(false);
+      });
 
     return () => {
       mounted = false;

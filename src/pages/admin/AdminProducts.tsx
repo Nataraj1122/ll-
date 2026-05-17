@@ -26,6 +26,7 @@ export default function AdminProducts() {
   const [sizes, setSizes] = useState('S, M, L, XL');
   const [isTrending, setIsTrending] = useState(false);
   const [isNewArrival, setIsNewArrival] = useState(false);
+  const [productCode, setProductCode] = useState('');
   
   const [submitting, setSubmitting] = useState(false);
 
@@ -41,6 +42,7 @@ export default function AdminProducts() {
     setSizes('S, M, L, XL');
     setIsTrending(false);
     setIsNewArrival(false);
+    setProductCode('');
     setIsModalOpen(true);
   };
 
@@ -71,6 +73,7 @@ export default function AdminProducts() {
     setSizes(prod.sizes.join(', '));
     setIsTrending(prod.isTrending);
     setIsNewArrival(prod.isNewArrival);
+    setProductCode(prod.productCode || '');
     setIsModalOpen(true);
   };
 
@@ -147,6 +150,7 @@ export default function AdminProducts() {
         is_trending: isTrending,
         is_new_arrival: isNewArrival,
         is_active: true,
+        product_code: productCode,
       };
 
       if (editingProduct) {
@@ -297,6 +301,18 @@ export default function AdminProducts() {
                         className="w-full border border-zinc-200 px-4 py-3 text-sm focus:border-black focus:outline-none"
                       />
                    </div>
+
+                   <div className="md:col-span-2">
+                       <label className="block text-[10px] uppercase tracking-widest font-bold text-zinc-500 mb-2">Product Code / SKU</label>
+                       <input 
+                         type="text" 
+                         required 
+                         value={productCode} 
+                         onChange={e => setProductCode(e.target.value)} 
+                         placeholder="e.g. RL101"
+                         className="w-full border border-zinc-200 px-4 py-3 text-sm focus:border-black focus:outline-none"
+                       />
+                    </div>
                    
                    <div>
                       <label className="block text-[10px] uppercase tracking-widest font-bold text-zinc-500 mb-2">Price (INR)</label>

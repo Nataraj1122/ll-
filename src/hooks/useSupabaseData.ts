@@ -94,7 +94,8 @@ export function useSupabaseProducts(limit = 20, page = 1) {
           sizes: p.sizes || ['S', 'M', 'L', 'XL'],
           isTrending: p.is_trending || false,
           isNewArrival: p.is_new_arrival ?? true,
-          isActive: p.is_active ?? true
+          isActive: p.is_active ?? true,
+          productCode: p.product_code
         }])).values()));
       }
     } catch (err: any) {

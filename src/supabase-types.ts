@@ -18,6 +18,7 @@ export interface ProductTable {
   is_trending: boolean;
   is_new_arrival: boolean;
   is_active: boolean;
+  product_code?: string;
   created_at: string;
 }
 

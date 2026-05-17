@@ -7,6 +7,7 @@ import { useAppContext } from '../context/AppContext';
 import { formatINR } from '../lib/utils';
 import { Product } from '../types';
 import DataErrorState from '../components/DataErrorState';
+import ProductCard from '../components/ProductCard';
 
 export default function CategoryPage() {
   const { id } = useParams<{ id: string }>();
@@ -53,28 +54,7 @@ export default function CategoryPage() {
              <div className="col-span-full py-12 text-center text-zinc-500 text-sm font-semibold">No products found in this category.</div>
           ) : (
             categoryProducts.map((item, idx) => (
-              <motion.div 
-                key={`cat-prod-${item.id}-${idx}`}
-                className="group cursor-pointer block"
-                whileHover={{ y: -10 }}
-                onClick={() => setSelectedProduct(item)}
-              >
-                <div className="aspect-[3/4] bg-zinc-100 mb-4 relative overflow-hidden">
-                  {isInWishlist(item.id) && (
-                    <div className="absolute top-4 right-4 z-10 w-8 h-8 bg-white/80 backdrop-blur rounded-full flex items-center justify-center">
-                      <Heart size={14} fill="black" className="text-black" />
-                    </div>
-                  )}
-                  <img 
-                    src={item.images && item.images.length > 0 ? item.images[0] : ""} 
-                    alt={item.name} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
-                  {item.isNewArrival && <div className="absolute top-4 left-4 bg-white px-3 py-1 text-[9px] uppercase tracking-widest font-bold z-10">New</div>}
-                </div>
-                <h4 className="text-[11px] uppercase tracking-wider font-semibold mb-1">{item.name}</h4>
-                <p className="text-zinc-500 text-[11px]">{formatINR(item.price)}</p>
-              </motion.div>
+              <ProductCard key={`cat-prod-${item.id}-${idx}`} product={item} />
             ))
           )}
         </div>

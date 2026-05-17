@@ -15,6 +15,7 @@ export interface Product {
   sizes: string[];
   isTrending: boolean;
   isNewArrival: boolean;
+  productCode?: string;
 }
 
 export interface CartItem {

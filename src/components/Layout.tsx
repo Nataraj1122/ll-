@@ -18,6 +18,9 @@ export default function Layout() {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const isHome = location.pathname === '/';
@@ -78,6 +81,59 @@ export default function Layout() {
     }
     setMobileMenuOpen(false);
   };
+
+  useEffect(() => {
+    const performSearch = async () => {
+      if (!searchQuery.trim() || searchQuery.length < 2) {
+        setSearchResults([]);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        // Priority search: Try exact product code match first
+        const { data: exactData, error: exactError } = await supabase
+          .from('products')
+          .select('*')
+          .eq('product_code', searchQuery.toUpperCase())
+          .eq('is_active', true)
+          .limit(1);
+
+        if (exactError) throw exactError;
+
+        if (exactData && exactData.length > 0) {
+          setSearchResults(exactData);
+          setIsSearching(false);
+          return;
+        }
+
+        // Fallback: Partial match on name, code, description, category
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .or(`name.ilike.%${searchQuery}%,product_code.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%`)
+          .eq('is_active', true)
+          .limit(8);
+
+        if (error) throw error;
+        setSearchResults(data || []);
+      } catch (err) {
+        console.error('Search error:', err);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    const timer = setTimeout(performSearch, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (searchOpen) {
+      setSearchQuery('');
+      setSearchResults([]);
+    }
+  }, [searchOpen]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -301,17 +357,70 @@ export default function Layout() {
               </button>
             </div>
             
-            <div className="max-w-4xl mx-auto w-full px-6 flex-1 flex flex-col justify-center pb-32">
+            <div className="max-w-4xl mx-auto w-full px-6 flex-1 flex flex-col justify-start pt-12 pb-32 overflow-y-auto scrollbar-none">
               <div className="relative mb-16">
                 <input 
                   autoFocus
                   type="text" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="SEARCH OUR COLLECTIONS..." 
                   className="w-full bg-transparent border-b-2 border-zinc-200 py-6 text-2xl md:text-5xl font-serif text-black placeholder:text-zinc-200 focus:outline-none focus:border-black transition-colors"
                 />
-                <Search size={32} className="absolute right-0 top-1/2 -translate-y-1/2 text-zinc-300" />
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-4">
+                  {isSearching && (
+                    <motion.div 
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                      className="w-6 h-6 border-2 border-zinc-200 border-t-black rounded-full"
+                    />
+                  )}
+                  <Search size={32} className="text-zinc-300" />
+                </div>
               </div>
               
+              {searchQuery.trim().length >= 2 && (
+                <div className="mb-12">
+                  <h4 className="text-[10px] uppercase tracking-[0.3em] font-bold text-zinc-400 mb-8">
+                    {isSearching ? 'Searching...' : searchResults.length > 0 ? `Results (${searchResults.length})` : 'No products found'}
+                  </h4>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {searchResults.map((product) => (
+                      <motion.div
+                        key={`search-result-${product.id}`}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="group"
+                      >
+                        <Link 
+                          to={`/category/${product.category_id}`} // Link to its category page
+                          onClick={() => {
+                            setSearchOpen(false);
+                          }}
+                          className="block"
+                        >
+                          <div className="aspect-[3/4] bg-zinc-100 mb-3 overflow-hidden relative">
+                            <img 
+                              src={product.image_url} 
+                              alt={product.name} 
+                              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                            />
+                            {product.product_code && (
+                              <div className="absolute top-2 left-2 bg-black/80 text-white text-[8px] px-2 py-1 uppercase tracking-widest font-bold">
+                                {product.product_code}
+                              </div>
+                            )}
+                          </div>
+                          <h5 className="text-[10px] uppercase tracking-widest font-bold mb-1 truncate">{product.name}</h5>
+                          <p className="text-xs text-zinc-500">{formatINR(product.price)}</p>
+                        </Link>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                 <div>
                   <h4 className="text-[10px] uppercase tracking-[0.3em] font-bold text-zinc-400 mb-6">Trending Searches</h4>

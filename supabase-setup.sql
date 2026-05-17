@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS products (
   sizes TEXT[] DEFAULT ARRAY['S', 'M', 'L', 'XL'],
   is_trending BOOLEAN DEFAULT FALSE,
   is_new_arrival BOOLEAN DEFAULT TRUE,
+  is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

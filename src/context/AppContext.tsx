@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { CartItem, Product, WishlistItem } from '../types';
+import { CartTable, WishlistTable } from '../supabase-types';
 import { useAuth } from './AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -46,18 +47,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase
         .from('cart')
         .select('*')
-        .eq('user_id', user.id);
+        .eq('user_id', user.id) as { data: CartTable[] | null, error: any };
       
       if (!error && data) {
-        setCartItems(Array.from(new Map(data.map((item: any) => [item.cart_item_id, {
-          id: item.product_id,
-          cartItemId: item.cart_item_id,
-          name: item.name,
-          price: item.price,
-          image: item.image_url || '',
-          size: item.size,
-          quantity: item.quantity
-        } as CartItem])).values()));
+        const cartMap = new Map<string, CartItem>();
+        data.forEach((item: CartTable) => {
+          cartMap.set(item.cart_item_id, {
+            id: item.product_id,
+            cartItemId: item.cart_item_id,
+            name: item.name,
+            price: item.price,
+            image: item.image_url || '',
+            size: item.size,
+            quantity: item.quantity
+          });
+        });
+        setCartItems(Array.from(cartMap.values()));
       }
     };
 
@@ -89,15 +94,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase
         .from('wishlist')
         .select('*, products(*)')
-        .eq('user_id', user.id);
+        .eq('user_id', user.id) as { data: WishlistTable[] | null, error: any };
       
       if (!error && data) {
-        setWishlistItems(Array.from(new Map(data.map((item: any) => [item.products.id, {
-          id: item.products.id,
-          name: item.products.name,
-          price: item.products.price,
-          image: item.products.image_url || ''
-        } as WishlistItem])).values()));
+        const wishlistMap = new Map<string, WishlistItem>();
+        data.forEach((item: WishlistTable) => {
+          if (item.products) {
+            wishlistMap.set(item.products.id, {
+              id: item.products.id,
+              name: item.products.name,
+              price: item.products.price,
+              image: item.products.image_url || ''
+            });
+          }
+        });
+        setWishlistItems(Array.from(wishlistMap.values()));
       }
     };
 

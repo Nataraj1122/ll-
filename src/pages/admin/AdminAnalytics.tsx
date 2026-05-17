@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Order } from '../../types';
+import { OrderTable } from '../../supabase-types';
 import { formatINR } from '../../lib/utils';
 import {
   AreaChart,
@@ -22,11 +23,11 @@ export default function AdminAnalytics() {
         const { data, error } = await supabase
           .from('orders')
           .select('*')
-          .order('created_at', { ascending: true });
+          .order('created_at', { ascending: true }) as { data: OrderTable[] | null, error: any };
 
         if (error) throw error;
         
-        const formattedOrders: Order[] = Array.from(new Map<string, Order>(data.map((ord: any) => [ord.id, {
+        const formattedOrders: Order[] = Array.from(new Map<string, Order>(data ? data.map((ord: OrderTable) => [ord.id, {
           id: ord.id,
           userId: ord.user_id,
           customerName: ord.customer_name,
@@ -36,10 +37,10 @@ export default function AdminAnalytics() {
           zipCode: ord.zip_code || '',
           paymentMethod: ord.payment_method,
           totalAmount: ord.total_price,
-          status: ord.status,
+          status: ord.status as any,
           items: ord.items,
           createdAt: { toDate: () => new Date(ord.created_at) } as any
-        }])).values());
+        }]) : []).values());
 
         setOrders(formattedOrders);
       } catch (err) {

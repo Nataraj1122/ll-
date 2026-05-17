@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { Product, Category } from '../types';
+import { CategoryTable, ProductTable } from '../supabase-types';
 
 export function useSupabaseCategories() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -14,12 +15,12 @@ export function useSupabaseCategories() {
       const { data, error: sbError } = await supabase
         .from('categories')
         .select('*')
-        .order('name');
+        .order('name') as { data: CategoryTable[] | null, error: any };
       
       if (sbError) throw sbError;
       
       if (data) {
-        setCategories(Array.from(new Map(data.map(cat => [cat.id, {
+        setCategories(Array.from(new Map(data.map((cat: CategoryTable) => [cat.id, {
           id: cat.id,
           name: cat.name,
           image: cat.image_url
@@ -75,14 +76,14 @@ export function useSupabaseProducts(limit = 20, page = 1) {
         .select('*')
         .eq('is_active', true)
         .order('created_at', { ascending: false })
-        .range(from, to);
+        .range(from, to) as { data: ProductTable[] | null, error: any };
       
       if (sbError) throw sbError;
       
       console.log('Products fetched:', data);
       
       if (data) {
-        setProducts(Array.from(new Map(data.map(p => [p.id, {
+        setProducts(Array.from(new Map(data.map((p: ProductTable) => [p.id, {
           id: p.id,
           name: p.name || 'Untitled Product',
           price: p.price || 0,

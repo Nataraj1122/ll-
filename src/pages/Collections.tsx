@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSupabaseCategories } from '../hooks/useSupabaseData';
 import { Link } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 
 export default function Collections() {
   const { categories, loading } = useSupabaseCategories();

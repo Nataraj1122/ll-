@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Customer, Order } from '../../types';
+import { ProfileTable, OrderTable } from '../../supabase-types';
 import { formatINR } from '../../lib/utils';
 import { User, ChevronDown, ChevronUp, Package, Clock, CheckCircle, XCircle, Truck } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AdminCustomers() {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -22,7 +23,7 @@ export default function AdminCustomers() {
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }) as { data: ProfileTable[] | null, error: any };
 
       if (profileError) throw profileError;
 
@@ -30,12 +31,12 @@ export default function AdminCustomers() {
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }) as { data: OrderTable[] | null, error: any };
 
       if (orderError) throw orderError;
 
       // Format orders (deduplicate)
-      const formattedOrders: Order[] = Array.from(new Map<string, Order>(orderData.map((ord: any) => [ord.id, {
+      const formattedOrders: Order[] = Array.from(new Map<string, Order>(orderData ? orderData.map((ord: OrderTable) => [ord.id, {
         id: ord.id,
         userId: ord.user_id,
         customerName: ord.customer_name,
@@ -45,14 +46,14 @@ export default function AdminCustomers() {
         zipCode: ord.zip_code || '',
         paymentMethod: ord.payment_method,
         totalAmount: ord.total_price,
-        status: ord.status,
+        status: ord.status as any,
         items: ord.items,
         createdAt: { toDate: () => new Date(ord.created_at) } as any,
-        cancelledAt: ord.cancelled_at ? { toDate: () => new Date(ord.cancelled_at) } as any : undefined
-      }])).values());
+        cancelledAt: ord.cancelled_at ? { toDate: () => new Date(ord.cancelled_at!) } as any : undefined
+      }]) : []).values());
 
       // Format customers and calculate aggregates (deduplicate)
-      const formattedCustomers: Customer[] = Array.from(new Map<string, Customer>(profileData.map((prof: any) => {
+      const formattedCustomers: Customer[] = Array.from(new Map<string, Customer>(profileData ? profileData.map((prof: ProfileTable) => {
         const custOrders = formattedOrders.filter(o => o.userId === prof.id);
         const totalSpent = custOrders.reduce((sum, o) => sum + o.totalAmount, 0);
         
@@ -65,7 +66,7 @@ export default function AdminCustomers() {
           totalSpent: totalSpent,
           createdAt: { toDate: () => new Date(prof.created_at) } as any
         }];
-      })).values());
+      }) : []).values());
 
       setOrders(formattedOrders);
       setCustomers(formattedCustomers);

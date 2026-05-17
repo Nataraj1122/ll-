@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, X } from 'lucide-react';
 import { useSupabaseProducts, useSupabaseCategories } from '../hooks/useSupabaseData';
 import { useAppContext } from '../context/AppContext';

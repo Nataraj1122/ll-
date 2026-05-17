@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { formatINR } from '../../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, Users, BadgeIndianRupee, ArrowRight, Package } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();

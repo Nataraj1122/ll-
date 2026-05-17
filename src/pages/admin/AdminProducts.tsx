@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useSupabaseCategories, useSupabaseProducts } from '../../hooks/useSupabaseData';
 import { Product } from '../../types';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Edit2, Trash2, Plus, X, AlertTriangle, CheckCircle } from 'lucide-react';
 import { formatINR } from '../../lib/utils';
 import DataErrorState from '../../components/DataErrorState';

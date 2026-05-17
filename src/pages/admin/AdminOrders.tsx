@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Order } from '../../types';
+import { OrderTable } from '../../supabase-types';
 import { formatINR } from '../../lib/utils';
 import { ChevronDown, ChevronUp, Package, Clock, Truck, CheckCircle, XCircle } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -17,11 +18,11 @@ export default function AdminOrders() {
       const { data, error } = await supabase
         .from('orders')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }) as { data: OrderTable[] | null, error: any };
 
       if (error) throw error;
 
-      const formattedOrders: Order[] = Array.from(new Map<string, Order>(data.map((ord: any) => [ord.id, {
+      const formattedOrders: Order[] = Array.from(new Map<string, Order>(data ? data.map((ord: OrderTable) => [ord.id, {
         id: ord.id,
         userId: ord.user_id,
         customerName: ord.customer_name,
@@ -31,13 +32,13 @@ export default function AdminOrders() {
         zipCode: ord.zip_code || '',
         paymentMethod: ord.payment_method,
         totalAmount: ord.total_price,
-        status: ord.status,
+        status: ord.status as any,
         items: ord.items,
         createdAt: { toDate: () => new Date(ord.created_at) } as any,
-        cancelledAt: ord.cancelled_at ? { toDate: () => new Date(ord.cancelled_at) } as any : undefined,
+        cancelledAt: ord.cancelled_at ? { toDate: () => new Date(ord.cancelled_at!) } as any : undefined,
         cancelledBy: ord.cancelled_by,
         cancellationReason: ord.cancellation_reason
-      }])).values());
+      }]) : []).values());
 
       setOrders(formattedOrders);
       setLoading(false);

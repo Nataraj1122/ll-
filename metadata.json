@@ -1,6 +1,8 @@
 {
-  "name": "Remix: RELOAD 2",
+  "name": "Remix: RELOAD og",
   "description": "A high-end, minimalist menswear e-commerce platform built with React and a complete Supabase backend, showcasing modern luxury and timeless craftsmanship.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

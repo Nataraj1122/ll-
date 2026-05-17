@@ -146,6 +146,7 @@ export default function AdminProducts() {
         sizes: Array.from(new Set(sizes.split(',').map(s => s.trim()).filter(Boolean))),
         is_trending: isTrending,
         is_new_arrival: isNewArrival,
+        is_active: true,
       };
 
       if (editingProduct) {

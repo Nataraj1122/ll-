@@ -73,6 +73,7 @@ export function useSupabaseProducts(limit = 20, page = 1) {
       const { data, error: sbError } = await supabase
         .from('products')
         .select('*')
+        .eq('is_active', true)
         .order('created_at', { ascending: false })
         .range(from, to);
       
@@ -91,7 +92,8 @@ export function useSupabaseProducts(limit = 20, page = 1) {
           stock: p.stock_quantity || 0,
           sizes: p.sizes || ['S', 'M', 'L', 'XL'],
           isTrending: p.is_trending || false,
-          isNewArrival: p.is_new_arrival ?? true
+          isNewArrival: p.is_new_arrival ?? true,
+          isActive: p.is_active ?? true
         }])).values()));
       }
     } catch (err: any) {
